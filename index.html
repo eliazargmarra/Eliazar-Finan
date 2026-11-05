@@ -17,12 +17,11 @@
 <body class="min-h-screen p-4 md:p-8">
     <div class="max-w-6xl mx-auto space-y-6">
         
-        <!-- Header limpio sin texto visible ni input a la vista -->
+        <!-- Header limpio -->
         <header class="card p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-cyan-400"><i class="fa-solid fa-wallet mr-2"></i> Finanzas Eliazar</h1>
             </div>
-            <!-- Input oculto para conservar tu link de Apps Script internamente sin que se vea -->
             <div class="hidden">
                 <input type="text" id="scriptUrl" value="https://script.google.com/macros/s/AKfycbzJueE9OIPSajZ.../exec">
             </div>
@@ -51,7 +50,7 @@
         <!-- Secciones Principales -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Categorías con Porcentajes Editables -->
+            <!-- Categorías -->
             <div class="lg:col-span-2 card p-6 rounded-2xl shadow-xl">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold text-slate-200"><i class="fa-solid fa-chart-pie mr-2 text-cyan-400"></i> Categorías</h3>
@@ -112,7 +111,7 @@
 
         </div>
 
-        <!-- Tabla Movimientos con Botón de Enviar Resumen por Mail -->
+        <!-- Tabla Movimientos -->
         <div class="card p-6 rounded-2xl shadow-xl">
             <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
                 <h3 class="text-lg font-bold text-slate-200"><i class="fa-solid fa-list-ul mr-2 text-indigo-400"></i> Historial Sincronizado</h3>
@@ -138,8 +137,8 @@
     </div>
 
     <script>
-        // PEGA TU LINK REAL DE APPS SCRIPT AQUÍ ENTRE LAS COMILLAS:
-        let SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJuE9OlPSajaa-tAlta_xs8tBQZLjIFKQKxDJP2_0p0jKcZ3_av_hq0-MyyfasnU68/exec"; 
+        // PEGA TU LINK REAL DE APPS SCRIPT AQUÍ:
+        let SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJueE9OIPSajZ.../exec"; 
         
         let categoriasCache = [];
         let presupuestoCache = 0;
@@ -222,7 +221,8 @@
             const filaSheet = index + 4;
             const payload = { action: "updatePct", fila: filaSheet, pct: pctDecimal };
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            setTimeout(cargarDatosDesdeSheet, 1200);
+            // Esperamos 2.5 segundos para que Google Sheets procese el cambio antes de recargar
+            setTimeout(cargarDatosDesdeSheet, 2500);
         }
 
         async function enviarGastoASheet() {
@@ -238,20 +238,20 @@
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             document.getElementById('gastoDetalle').value = '';
             document.getElementById('gastoMonto').value = '';
-            setTimeout(cargarDatosDesdeSheet, 1500);
+            setTimeout(cargarDatosDesdeSheet, 2000);
         }
 
         async function sincronizarPresupuesto() {
             if (!SCRIPT_URL) return;
             const val = document.getElementById('presupuestoTotal').value;
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updatePresupuesto", presupuesto: val }) });
-            setTimeout(cargarDatosDesdeSheet, 1500);
+            setTimeout(cargarDatosDesdeSheet, 2000);
         }
 
         async function eliminarGasto(fila) {
             if (!confirm("¿Eliminar gasto de la planilla?")) return;
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteGasto", fila: fila }) });
-            setTimeout(cargarDatosDesdeSheet, 1500);
+            setTimeout(cargarDatosDesdeSheet, 2000);
         }
 
         async function enviarResumenMail() {
