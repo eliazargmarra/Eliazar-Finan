@@ -63,13 +63,14 @@
                         <thead>
                             <tr class="border-b border-slate-700 text-slate-400">
                                 <th class="p-3">Categoría</th>
+                                <th class="p-3 text-center">% Asignado</th>
                                 <th class="p-3 text-right">Presupuesto ($)</th>
                                 <th class="p-3 text-right">Gasto Real</th>
                                 <th class="p-3 text-right">Disponible</th>
                             </tr>
                         </thead>
                         <tbody id="tablaCategoriasBody">
-                            <tr><td colspan="4" class="p-4 text-center text-slate-500">Conectando con Google Sheets...</td></tr>
+                            <tr><td colspan="5" class="p-4 text-center text-slate-500">Conectando con Google Sheets...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -136,6 +137,9 @@
 
     <script>
         let SCRIPT_URL = localStorage.getItem('eliazar_script_url') || '';
+        let categoriasCache = [];
+        let presupuestoCache = 0;
+
         document.getElementById('scriptUrl').value = SCRIPT_URL;
         document.getElementById('gastoFecha').valueAsDate = new Date();
 
@@ -151,8 +155,11 @@
                 const res = await fetch(SCRIPT_URL);
                 const data = await res.json();
                 
-                document.getElementById('presupuestoTotal').value = data.presupuesto;
-                renderCategorias(data.categorias, data.presupuesto);
+                presupuestoCache = Number(data.presupuesto) || 0;
+                categoriasCache = data.categorias;
+
+                document.getElementById('presupuestoTotal').value = presupuestoCache;
+                renderCategorias(categoriasCache, presupuestoCache);
                 renderGastos(data.gastos);
             } catch (err) {
                 console.error("Error al sincronizar con Sheet:", err);
@@ -166,17 +173,21 @@
             selectCat.innerHTML = '';
 
             let totalGastado = 0;
-            cats.forEach(c => {
+            cats.forEach((c, index) => {
                 const nombre = c[0];
+                const pct = (Number(c[1]) * 100).toFixed(0); // Convertir decimal de Sheet a porcentaje
                 const pres = c[2];
                 const gasto = c[3];
                 const disp = c[4];
-                totalGastado += gasto;
+                totalGastado += Number(gasto);
 
                 selectCat.innerHTML += `<option value="${nombre}">${nombre}</option>`;
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-800">
                         <td class="p-3 text-slate-200 font-medium">${nombre}</td>
+                        <td class="p-3 text-center">
+                            <input type="number" value="${pct}" onchange="actualizarPorcentajeLocal(${index}, this.value)" class="w-16 px-2 py-1 text-center rounded border text-xs"> %
+                        </td>
                         <td class="p-3 text-right text-slate-300">$${Number(pres).toLocaleString('es-AR')}</td>
                         <td class="p-3 text-right text-amber-400 font-semibold">$${Number(gasto).toLocaleString('es-AR')}</td>
                         <td class="p-3 text-right font-bold ${disp < 0 ? 'text-red-400' : 'text-emerald-400'}">$${Number(disp).toLocaleString('es-AR')}</td>
@@ -206,6 +217,21 @@
                     </tr>
                 `;
             });
+        }
+
+        async function actualizarPorcentajeLocal(index, nuevoPct) {
+            if (!SCRIPT_URL) return;
+            const pctDecimal = Number(nuevoPct) / 100;
+            const filaSheet = index + 4; // Comienza en la fila 4 de la solapa Dashboard
+
+            const payload = {
+                action: "updatePct",
+                fila: filaSheet,
+                pct: pctDecimal
+            };
+
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            setTimeout(cargarDatosDesdeSheet, 1200);
         }
 
         async function enviarGastoASheet() {
