@@ -113,9 +113,12 @@
 
         </div>
 
-        <!-- Tabla Movimientos -->
+        <!-- Tabla Movimientos e Historial -->
         <div class="card p-6 rounded-2xl shadow-xl">
-            <h3 class="text-lg font-bold text-slate-200 mb-4"><i class="fa-solid fa-list-ul mr-2 text-indigo-400"></i> Historial Sincronizado</h3>
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                <h3 class="text-lg font-bold text-slate-200"><i class="fa-solid fa-list-ul mr-2 text-indigo-400"></i> Historial Sincronizado</h3>
+                <button onclick="enviarResumenMail()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center gap-2"><i class="fa-solid fa-envelope"></i> Enviar Resumen por Mail</button>
+            </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
@@ -175,7 +178,7 @@
             let totalGastado = 0;
             cats.forEach((c, index) => {
                 const nombre = c[0];
-                const pct = (Number(c[1]) * 100).toFixed(0); // Convertir decimal de Sheet a porcentaje
+                const pct = (Number(c[1]) * 100).toFixed(0);
                 const pres = c[2];
                 const gasto = c[3];
                 const disp = c[4];
@@ -222,14 +225,8 @@
         async function actualizarPorcentajeLocal(index, nuevoPct) {
             if (!SCRIPT_URL) return;
             const pctDecimal = Number(nuevoPct) / 100;
-            const filaSheet = index + 4; // Comienza en la fila 4 de la solapa Dashboard
-
-            const payload = {
-                action: "updatePct",
-                fila: filaSheet,
-                pct: pctDecimal
-            };
-
+            const filaSheet = index + 4;
+            const payload = { action: "updatePct", fila: filaSheet, pct: pctDecimal };
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             setTimeout(cargarDatosDesdeSheet, 1200);
         }
@@ -261,6 +258,12 @@
             if (!confirm("¿Eliminar gasto de la planilla?")) return;
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteGasto", fila: fila }) });
             setTimeout(cargarDatosDesdeSheet, 1500);
+        }
+
+        async function enviarResumenMail() {
+            if (!SCRIPT_URL) return alert("Ingresá primero la URL de Apps Script");
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "sendEmail" }) });
+            alert("✉️ ¡Solicitud de resumen enviada! Revisa tu casilla de correo.");
         }
 
         if (SCRIPT_URL) cargarDatosDesdeSheet();
